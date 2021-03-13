@@ -1,10 +1,10 @@
-Wireguard Private Networking - Multi Usecases Ansible Role
-===================================================
+Multi Usecases Ansible Role for Wireguard Private Networking
+============================================================
 
 Flexible installation for wireguard private networking:
-  - single or multiple relay server
-  - multiple clients configurable using ansible or as external client config files
-  - usable several times to create multiple wireguard interfaces on different overlapping groups of machine
+  - single or multiple relay servers
+  - mulitple clients configurable using ansible or as external clients config files
+  - usable several times to create multiple wireguard interfaces on different overlapping groups of machines
 
 Usecases
 --------
@@ -21,7 +21,7 @@ Be sure to read some wireguard doc to better understand what is happening (netwo
 Wireguard Key Generation and Role Design
 ----------------------------------------
 
-All configs and secret comes from inventory and code variables following Ansible execution good practices (no cross hosts slurping of keys). So all the keys have to be generated manually and put in the inventory / ansible vault files. This design also allow easy and partial secret renewing.
+All configs and secret comes from inventory and code variables following Ansible execution best practices. So all the keys have to be generated manually and put in the inventory / ansible vault files. This design also allow easy and partial secret renewing.
 
 #### Key generation
 
@@ -45,9 +45,9 @@ wg_server_host ansible_host=222.222.222.222 ansible_user=admin
 wg_client_2 ansible_host=111.222.111.222 ansible_user=admin
 
 [wireguard]
-wg_server_host wireguard_ip_end="0.1" wireguard_privkey="{{ secret_wg1_privkey_proxmox_host }}" wireguard_pubkey="ArnEBKDmv/86PHLG4D7uUfh/p9WUwAng06p3ke4cgEc="
-infra_admin wireguard_ip_end="0.2" wireguard_privkey="{{ secret_wg1_privkey_infra_admin }}" wireguard_pubkey="sc+27FiMaxukcWbHPoJvlofOC2T3BxcHPD3P6cqBDE8="
-my_laptop_client wireguard_ip_end="0.5" wireguard_privkey="{{ secret_wg1_privkey_elie }}" wireguard_pubkey="GfCP6BpaI8d/hgCHNBuNUl2LPuptjjYfDU+a7UhIR8="
+wg_server_host wireguard_ip_end="0.1" wireguard_privkey="{{ secret_wg1_privkey_wg_server_host }}" wireguard_pubkey="ArnEBKDmv/86PHLG4D7uUfh/p9WUwAng06p3ke4cgEc="
+wg_client_2 wireguard_ip_end="0.2" wireguard_privkey="{{ secret_wg1_privkey_wg_client_2 }}" wireguard_pubkey="sc+27FiMaxukcWbHPoJvlofOC2T3BxcHPD3P6cqBDE8="
+my_laptop_client wireguard_ip_end="0.5" wireguard_privkey="{{ secret_wg1_privkey_my_laptop }}" wireguard_pubkey="GfCP6BpaI8d/hgCHNBuNUl2LPuptjjYfDU+a7UhIR8="
 
 [wireguard:vars]
 wireguard_interface_state="present"
@@ -59,7 +59,7 @@ wg_server_host wireguard_public_ip="111.122.133.144" wireguard_listen_port="5182
 
 [wireguard_clients]
 my_laptop_client
-infra_admin
+wg_client_2
 ```
 
 #### Example playbook

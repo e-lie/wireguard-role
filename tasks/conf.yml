@@ -1,0 +1,49 @@
+---
+- name: Enable and persist ip forwarding to allow traffic from client to client via a wgserver
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    state: present
+    sysctl_set: yes
+    reload: yes
+  when: wireguard_ip_forward and inventory_hostname in groups[wireguard_group_name + "_servers"]
+
+- name: Generate wireguard configs
+  template:
+    src: interface.conf.j2
+    dest: "{{ wireguard_path }}/{{ wireguard_interface_name }}.conf"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o="
+  # no_log: yes
+  register: config
+  notify:
+    - Enable wg-quick service
+    - Restart wg-quick service
+    - Ping servers from clients to initiate and test connection
+
+- name: Generate wireguard external configs
+  delegate_to: "{{ wireguard_external_conf_host }}"
+  template:
+    src: interface_external.conf.j2
+    dest: "{{ wireguard_external_conf_path }}/{{ item.name }}.conf"
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o="
+  # no_log: yes
+  register: config
+  loop: "{{ wireguard_external_clients }}"
+
+- name: Ensure wg-quick service is started
+  service:
+    name: "wg-quick@{{ wireguard_interface_name }}"
+    state: started
+  notify:
+
+- name: Put wireguard peer hostnames in /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ wireguard_subnet + hostvars[item]['wireguard_ip_end']|string }}    {{ wireguard_interface_name }}_{{ item }}"
+    regexp: ".*{{ wireguard_interface_name }}_{{ item }}.*$"
+  loop: "{{ groups[wireguard_group_name] }}"
+  when: wireguard_config_hostnames 

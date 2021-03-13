@@ -1,0 +1,132 @@
+---
+
+- name: Install linux headers (Ubuntu)
+  apt:
+    update_cache: yes
+    state: present
+    name: linux-headers-generic
+  when:
+    - ansible_distribution == "Ubuntu"
+    - ansible_distribution_major_version|int < 20
+
+- name: Check that is proxmox
+  stat:
+    path: /etc/pve
+  register: is_proxmox
+  when: ansible_distribution == "Debian"
+
+- name: Install linux headers when debian proxmox
+  apt:
+    update_cache: yes
+    state: present
+    name: pve-headers-{{ ansible_kernel }}
+  when: ansible_distribution == "Debian" and is_proxmox.stat.exists
+
+- name: Install linux headers (Debian)
+  apt:
+    update_cache: yes
+    state: present
+    name: linux-headers-{{ ansible_kernel }}
+  when:
+    - ansible_distribution == "Debian"
+    - not is_proxmox.stat.exists and "pve" not in ansible_kernel
+
+- name: Add backports repository (Debian)
+  lineinfile:
+    line: deb http://deb.debian.org/debian {{ ansible_distribution_release }}-backports main
+    path: /etc/apt/sources.list.d/backports.list
+    create: yes
+  when:
+    - ansible_distribution == "Debian"
+    - ansible_distribution_version|int <= 11
+    - wireguard_debian_enable_backports
+
+- name: Install wireguard (apt)
+  apt:
+    update_cache: yes
+    cache_valid_time: 0
+    state: present
+    name: wireguard
+  when:
+    - ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- name:
+  community.general.modprobe:
+    name: wireguard
+    state: present
+  when:
+    - ansible_distribution == "Debian"
+    - not is_proxmox.stat.exists and "pve" not in ansible_kernel
+
+- name: Install wireguard (pacman)
+  pacman:
+    name:
+      - wireguard-dkms
+      - wireguard-tools
+    state: present
+  when:
+    - ansible_distribution == "Archlinux"
+
+- name: Install wireguard (CentOS 8)
+  block:
+    - name: Install epel repo (CentOS 8)
+      dnf:
+        name:
+          - elrepo-release
+          - epel-release
+        state: present
+
+    - name: Install mod and tools (CentOS 8)
+      dnf:
+        name:
+          - kmod-wireguard
+          - wireguard-tools
+        state: present
+
+    - name: Create path (CentOS 8)
+      file:
+        path: "{{ wireguard_path }}"
+        state: directory
+        mode: u=rwx,g=,o=
+        group: root
+
+  when: ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "8"
+
+- name: Install wireguard (CentOS 7)
+  block:
+    - name: Install epel (CentOS 7)
+      yum:
+        name:
+          - epel-release
+          - https://www.elrepo.org/elrepo-release-7.el7.elrepo.noarch.rpm
+        state: present
+
+    - name: Install plugin-elrepo wireguard (CentOS 7)
+      yum:
+        name:
+          - yum-plugin-elrepo
+        state: present
+
+    - name: Install wireguard module and tools (CentOS 7)
+      yum:
+        name:
+          - kmod-wireguard
+          - wireguard-tools
+        state: present
+
+    - name: Creat path (CentOS 7)
+      file:
+        path: "{{ wireguard_path }}"
+        state: directory
+        mode: u=rwx,g=,o=
+        group: root
+
+  when: ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "7"
+
+- name: Install wireguard and tools (zypper)
+  zypper:
+    name:
+      - wireguard-tools
+    state: present
+  when:
+    - ansible_distribution == "openSUSE Leap"

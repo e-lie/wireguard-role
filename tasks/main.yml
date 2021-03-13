@@ -1,0 +1,12 @@
+---
+- name: Setup Wireguard
+  include_tasks: setup.yml
+  when: wireguard_interface_state == 'present'
+
+- name: Generate Wireguard config
+  include_tasks: conf.yml
+  when: wireguard_interface_state == 'present'
+
+- name: Remove Wireguard interface
+  include_tasks: remove_interface.yml
+  when: wireguard_interface_state == 'absent'

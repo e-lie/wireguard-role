@@ -1,0 +1,17 @@
+---
+wireguard_path: "/etc/wireguard"
+wireguard_group_name: ~
+
+wireguard_interface_state: present
+wireguard_interface_name: wg1
+
+wireguard_ip_forward: no
+
+wireguard_external_clients: []
+wireguard_external_conf_host: ~
+wireguard_external_conf_path: "/etc/wireguard"
+
+wireguard_config_hostnames: no
+
+wireguard_debian_enable_backports: true
+wireguard_debian_pin_packages: true

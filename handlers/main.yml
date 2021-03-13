@@ -1,0 +1,15 @@
+---
+- name: Enable wg-quick service
+  service:
+    name: "wg-quick@{{ wireguard_interface_name }}"
+    enabled: yes
+
+- name: Restart wg-quick service
+  service:
+    name: "wg-quick@{{ wireguard_interface_name }}"
+    state: restarted
+
+- name: Ping servers from clients to initiate and test connection
+  shell: ping -c 4 -w 6 {{ wireguard_subnet + hostvars[item]['wireguard_ip_end']|string }}
+  ignore_errors: true
+  loop: "{{ groups['wireguard_servers'] }}"

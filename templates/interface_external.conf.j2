@@ -1,0 +1,15 @@
+[Interface]
+Address = {{ wireguard_subnet + item.ip_end|string + "/32" }}
+PrivateKey = {{ item.privkey }}
+
+{# For a wireguard client add every servers as peers #}
+{% for peer in groups[wireguard_group_name + "_servers"] %}
+[Peer]
+# {{ peer }}
+PublicKey = {{ hostvars[peer]['wireguard_pubkey'] }}
+AllowedIPs = {{ wireguard_subnet + "0.1/16" }}
+{% if peer in groups[wireguard_group_name + "_servers"] %}
+Endpoint = {{ hostvars[peer]['wireguard_public_ip'] }}:{{ hostvars[peer]['wireguard_listen_port'] }}
+{% endif %}
+PersistentKeepalive = 25
+{% endfor %}

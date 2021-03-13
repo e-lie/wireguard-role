@@ -1,0 +1,19 @@
+- name: Stop and disable wg-quick service (on interface removal)
+  systemd:
+    name: "wg-quick@{{ wireguard_interface_name }}"
+    state: stopped
+    enabled: no
+
+- name: Remove wireguard config
+  file:
+    path: "{{ wireguard_path }}/{{ wireguard_interface_name }}.conf"
+    state: absent
+
+- name: Remove wireguard peer hostnames in /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ wireguard_subnet + hostvars[item]['wireguard_ip_end']|string }}    {{ wireguard_interface_name }}_{{ item }}"
+    regexp: ".*{{ wireguard_interface_name }}_{{ item }}.*$"
+    state: absent
+  loop: "{{ groups[wireguard_group_name] }}"
+  when: wireguard_config_hostnames 

@@ -1,0 +1,51 @@
+## File managed by Ansible. Do not edit manually.
+
+{# If server config #}
+{% if inventory_hostname in groups[wireguard_group_name + "_servers"] %}
+[Interface]
+Address = {{ wireguard_subnet + wireguard_ip_end|string + "/16" }}
+PrivateKey = {{ wireguard_privkey }}
+ListenPort = {{ wireguard_listen_port }}
+
+{# For a wireguard server add every other server + every clients as peers #}
+{% for peer in groups[wireguard_group_name] %}
+{% if peer != inventory_hostname %}
+[Peer]
+# {{ peer }}
+PublicKey = {{ hostvars[peer]['wireguard_pubkey'] }}
+{% if peer in groups[wireguard_group_name + "_servers"] %}
+Endpoint = {{ hostvars[peer]['wireguard_public_ip'] }}:{{ hostvars[peer]['wireguard_listen_port'] }}
+AllowedIPs = {{ wireguard_subnet + "0.1/16" }}
+{% else %}
+AllowedIPs = {{ wireguard_subnet + hostvars[peer]['wireguard_ip_end']|string + "/32" }}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% for peer in wireguard_external_clients %}
+[Peer]
+# {{ peer.name }}
+PublicKey = {{ peer.pubkey }}
+AllowedIPs = {{ wireguard_subnet + peer.ip_end|string + "/32" }}
+{% endfor %}
+{% endif %}
+{# Endif server config #}
+
+{# If client config #}
+{% if inventory_hostname in groups[wireguard_group_name + "_clients"] %}
+[Interface]
+Address = {{ wireguard_subnet + wireguard_ip_end|string + "/32" }}
+PrivateKey = {{ wireguard_privkey }}
+
+{# For a wireguard client add every servers as peers #}
+{% for peer in groups[wireguard_group_name + "_servers"] %}
+[Peer]
+# {{ peer }}
+PublicKey = {{ hostvars[peer]['wireguard_pubkey'] }}
+AllowedIPs = {{ wireguard_subnet + "0.1/16" }}
+{% if peer in groups[wireguard_group_name + "_servers"] %}
+Endpoint = {{ hostvars[peer]['wireguard_public_ip'] }}:{{ hostvars[peer]['wireguard_listen_port'] }}
+{% endif %}
+PersistentKeepalive = 25
+{% endfor %}
+{% endif %}
+{# Endif client config #}

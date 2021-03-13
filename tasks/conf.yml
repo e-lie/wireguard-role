@@ -15,7 +15,7 @@
     owner: root
     group: root
     mode: "u=rw,g=r,o="
-  # no_log: yes
+  no_log: yes
   register: config
   notify:
     - Enable wg-quick service
@@ -26,11 +26,11 @@
   delegate_to: "{{ wireguard_external_conf_host }}"
   template:
     src: interface_external.conf.j2
-    dest: "{{ wireguard_external_conf_path }}/{{ item.name }}.conf"
+    dest: "{{ wireguard_external_conf_path }}/{{ wireguard_interface_name }}_{{ item.name }}.conf"
     owner: root
     group: root
     mode: "u=rw,g=r,o="
-  # no_log: yes
+  no_log: yes
   register: config
   loop: "{{ wireguard_external_clients }}"
 

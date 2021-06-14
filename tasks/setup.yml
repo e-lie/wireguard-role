@@ -1,5 +1,3 @@
----
-
 - name: Install linux headers (Ubuntu)
   apt:
     update_cache: yes
@@ -22,6 +20,9 @@
     name: pve-headers-{{ ansible_kernel }}
   when: ansible_distribution == "Debian" and is_proxmox.stat.exists
 
+# Note: Just do nothing for armbian/sunxi (prevent headers, backports and install)
+# sunxi means armv7 A20 like proc and armbian already include wireguard in kernel and wireguard-tools are installed
+
 - name: Install linux headers (Debian)
   apt:
     update_cache: yes
@@ -29,7 +30,7 @@
     name: linux-headers-{{ ansible_kernel }}
   when:
     - ansible_distribution == "Debian"
-    - not is_proxmox.stat.exists and "pve" not in ansible_kernel
+    - not is_proxmox.stat.exists and "pve" not in ansible_kernel and "sunxi" not in ansible_kernel
 
 - name: Add backports repository (Debian)
   lineinfile:
@@ -37,7 +38,7 @@
     path: /etc/apt/sources.list.d/backports.list
     create: yes
   when:
-    - ansible_distribution == "Debian"
+    - ansible_distribution == "Debian" and "sunxi" not in ansible_kernel
     - ansible_distribution_version|int <= 11
     - wireguard_debian_enable_backports
 
@@ -48,7 +49,7 @@
     state: present
     name: wireguard
   when:
-    - ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+    - ansible_distribution == "Ubuntu" or ansible_distribution == "Debian" and "sunxi" not in ansible_kernel
 
 - name:
   community.general.modprobe:
@@ -56,7 +57,7 @@
     state: present
   when:
     - ansible_distribution == "Debian"
-    - not is_proxmox.stat.exists and "pve" not in ansible_kernel
+    - not is_proxmox.stat.exists and "pve" not in ansible_kernel and "sunxi" not in ansible_kernel
 
 - name: Install wireguard (pacman)
   pacman:

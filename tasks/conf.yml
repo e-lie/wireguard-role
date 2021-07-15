@@ -15,7 +15,7 @@
     owner: root
     group: root
     mode: "u=rw,g=r,o="
-  # no_log: yes
+  no_log: yes
   register: config
   notify:
     - Enable wg-quick service
